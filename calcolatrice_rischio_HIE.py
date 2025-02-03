@@ -2,13 +2,12 @@ import streamlit as st
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-# Modello di regressione logistica addestrato
-log_reg = LogisticRegression(max_iter=1000)
-
-# Coefficienti reali basati sull'addestramento
-log_reg.coef_ = np.array([[-3.51468447, -0.42067254]])  # Coefficienti reali
-log_reg.intercept_ = np.array([17.74942084380383])     # Intercetta reale
-log_reg.classes_ = np.array([0, 1])
+# Modello di regressione logistica fittizio (per esempio)
+# In un'app reale, qui caricheresti un modello pre-addestrato
+log_reg = LogisticRegression()
+log_reg.coef_ = np.array([[0.5, -0.3]])  # Coefficienti d'esempio
+log_reg.intercept_ = np.array([-1])     # Intercetta d'esempio
+log_reg.classes_ = np.array([0, 1])     # Classi binarie (0 = no HIE, 1 = HIE)
 
 # Funzione per calcolare il rischio di HIE
 def calcola_rischio(pH, BE, LATA):
@@ -16,8 +15,7 @@ def calcola_rischio(pH, BE, LATA):
         return 0, "Basso rischio"
     else:
         prob_rischio = log_reg.predict_proba([[pH, BE]])[:, 1][0]
-        rischio = (prob_rischio >= 0.2).astype(int)
-
+        
         if prob_rischio < 0.10:
             categoria = "Basso rischio"
         elif prob_rischio < 0.50:
@@ -38,9 +36,3 @@ if st.button("Calcola Rischio"):
     rischio, categoria = calcola_rischio(pH, BE, LATA)
     st.write(f"**Rischio Predetto di HIE:** {rischio}%")
     st.write(f"**Categoria di Rischio:** {categoria}")
-
-streamlit
-scikit-learn
-numpy
-
-
