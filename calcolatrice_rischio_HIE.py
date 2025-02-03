@@ -1,38 +1,51 @@
-import streamlit as st
-import numpy as np
-from sklearn.linear_model import LogisticRegression
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-# Modello di regressione logistica fittizio (per esempio)
-# In un'app reale, qui caricheresti un modello pre-addestrato
-log_reg = LogisticRegression()
-log_reg.coef_ = np.array([[0.5, -0.3]])  # Coefficienti d'esempio
-log_reg.intercept_ = np.array([-1])     # Intercetta d'esempio
-log_reg.classes_ = np.array([0, 1])     # Classi binarie (0 = no HIE, 1 = HIE)
+export default function HIERiskPredictor() {
+  const [PHA, setPHA] = useState('');
+  const [BEA, setBEA] = useState('');
+  const [LATA, setLATA] = useState('');
+  const [risk, setRisk] = useState(null);
 
-# Funzione per calcolare il rischio di HIE
-def calcola_rischio(pH, BE, LATA):
-    if LATA < 3:
-        return 0, "Basso rischio"
-    else:
-        prob_rischio = log_reg.predict_proba([[pH, BE]])[:, 1][0]
-        
-        if prob_rischio < 0.10:
-            categoria = "Basso rischio"
-        elif prob_rischio < 0.50:
-            categoria = "Rischio moderato"
-        else:
-            categoria = "Alto rischio"
+  const calculateRisk = () => {
+    const pha = parseFloat(PHA);
+    const bea = parseFloat(BEA);
+    const lata = parseFloat(LATA);
 
-        return round(prob_rischio * 100, 2), categoria
+    // Coefficienti derivati dal modello calibrato (ipotetici per questa demo)
+    const coefficients = { intercept: -4.5, PHA: 1.2, BEA: 0.8, LATA: 1.0 };
 
-# Interfaccia Streamlit
-st.title("Calcolatrice del Rischio di HIE")
+    // Calcolo della probabilità (logistic regression formula)
+    const logit = coefficients.intercept + (coefficients.PHA * pha) + (coefficients.BEA * bea) + (coefficients.LATA * lata);
+    const probability = 1 / (1 + Math.exp(-logit));
 
-pH = st.number_input("Inserisci il valore di pH arterioso (PHA):", min_value=6.5, max_value=7.5, step=0.01)
-BE = st.number_input("Inserisci il valore di Base Excess arterioso (BEA):", min_value=-30.0, max_value=10.0, step=0.1)
-LATA = st.number_input("Inserisci la concentrazione di lattati (LATA):", min_value=0.0, max_value=30.0, step=0.1)
+    // Soglia ottimale identificata dal punto di Youden
+    const threshold = 0.0081;
 
-if st.button("Calcola Rischio"):
-    rischio, categoria = calcola_rischio(pH, BE, LATA)
-    st.write(f"**Rischio Predetto di HIE:** {rischio}%")
-    st.write(f"**Categoria di Rischio:** {categoria}")
+    setRisk(probability >= threshold ? `Alto rischio di HIE (${(probability * 100).toFixed(2)}%)` : `Basso rischio di HIE (${(probability * 100).toFixed(2)}%)`);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <Card className="w-full max-w-md p-6">
+        <CardContent>
+          <h2 className="text-xl font-bold text-center mb-4">Calcolatore del Rischio HIE</h2>
+          <div className="space-y-4">
+            <Input type="number" placeholder="PHA" value={PHA} onChange={(e) => setPHA(e.target.value)} />
+            <Input type="number" placeholder="BEA" value={BEA} onChange={(e) => setBEA(e.target.value)} />
+            <Input type="number" placeholder="LATTATI" value={LATA} onChange={(e) => setLATA(e.target.value)} />
+            <Button onClick={calculateRisk} className="w-full">Calcola Rischio</Button>
+          </div>
+          {risk && (
+            <div className="mt-4 p-4 bg-gray-200 rounded text-center">
+              <strong>Risultato:</strong>
+              <p>{risk}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
